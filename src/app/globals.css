@@ -1,26 +1,361 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ==========================================================================
+   Bloom Market — design tokens
+   A botanical, warm, editorial system. One palette, one type scale, one set
+   of radii, shadows and control heights shared by every screen.
+   ========================================================================== */
+
+@theme {
+  /* --- Brand: leaf (deep botanical green) --- */
+  --color-leaf-50: #f2f7f2;
+  --color-leaf-100: #e0ebe1;
+  --color-leaf-200: #c2d7c5;
+  --color-leaf-300: #96b89c;
+  --color-leaf-400: #6a9673;
+  --color-leaf-500: #4a7a54;
+  --color-leaf-600: #376240;
+  --color-leaf-700: #2a4e32;
+  --color-leaf-800: #1f3b26;
+  --color-leaf-900: #14291a;
+  --color-leaf-950: #0d1c11;
+
+  /* --- Brand: bloom (rose accent, taken from the logo) --- */
+  --color-bloom-50: #fdf2f5;
+  --color-bloom-100: #fae3ea;
+  --color-bloom-200: #f4c6d4;
+  --color-bloom-300: #ec9fb5;
+  --color-bloom-400: #e0718f;
+  --color-bloom-500: #d24c72;
+  --color-bloom-600: #b93459;
+  --color-bloom-700: #9a2a48;
+  --color-bloom-800: #7d2239;
+
+  /* --- Neutrals: warm sand --- */
+  --color-sand-50: #fcfaf7;
+  --color-sand-100: #f7f3ec;
+  --color-sand-200: #efe8dd;
+  --color-sand-300: #e3d9c9;
+  --color-sand-400: #c9bca8;
+  --color-sand-500: #a8998a;
+  --color-sand-600: #8a7d6b;
+  --color-sand-700: #6b6153;
+  --color-sand-800: #4a443b;
+  --color-sand-900: #2f2b25;
+
+  /* --- Ink --- */
+  --color-ink: #16211a;
+  --color-ink-soft: #55635a;
+
+  /* --- Semantic surface tokens --- */
+  --color-canvas: #fcfaf7;
+  --color-surface: #ffffff;
+  --color-line: #e7dfd2;
+
+  /* --- Type --- */
+  --font-display: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+
+  /* --- Radii --- */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-2xl: 36px;
+
+  /* --- Shadows: warm, low-contrast, layered --- */
+  --shadow-xs: 0 1px 2px rgba(22, 33, 26, 0.05);
+  --shadow-soft: 0 1px 2px rgba(22, 33, 26, 0.04),
+    0 6px 16px -8px rgba(22, 33, 26, 0.1);
+  --shadow-card: 0 1px 2px rgba(22, 33, 26, 0.04),
+    0 14px 32px -20px rgba(22, 33, 26, 0.22);
+  --shadow-lift: 0 2px 4px rgba(22, 33, 26, 0.05),
+    0 26px 48px -24px rgba(22, 33, 26, 0.32);
+
+  /* --- Control heights (one system-wide rhythm) --- */
+  --spacing-control-sm: 2.5rem;
+  --spacing-control: 3rem;
+  --spacing-control-lg: 3.5rem;
+
+  --animate-fade-up: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-drift: drift 9s ease-in-out infinite;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes drift {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(3deg);
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    color: var(--color-ink);
+  }
+
+  /* A single, consistent focus treatment for every interactive element. */
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-leaf-600);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
+
+  ::selection {
+    background-color: var(--color-bloom-200);
+    color: var(--color-bloom-800);
+  }
+}
+
+@layer components {
+  /* Page shell — one max width for every route. */
+  .bm-shell {
+    width: 100%;
+    margin-inline: auto;
+    max-width: 80rem;
+    padding-inline: 1.25rem;
+  }
+
+  @media (min-width: 640px) {
+    .bm-shell {
+      padding-inline: 2rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .bm-shell {
+      padding-inline: 2.5rem;
+    }
+  }
+
+  /* Small-caps eyebrow used above every section heading. */
+  .bm-eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-leaf-600);
+  }
+
+  /* Buttons — one family, fixed heights, one focus/hover language. */
+  .bm-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: var(--spacing-control);
+    padding-inline: 1.5rem;
+    border-radius: 999px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .bm-btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .bm-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  .bm-btn-primary {
+    background-color: var(--color-leaf-800);
+    color: #fff;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .bm-btn-primary:hover:not(:disabled) {
+    background-color: var(--color-leaf-700);
+    box-shadow: var(--shadow-card);
+  }
+
+  .bm-btn-bloom {
+    background-color: var(--color-bloom-500);
+    color: #fff;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .bm-btn-bloom:hover:not(:disabled) {
+    background-color: var(--color-bloom-600);
+    box-shadow: var(--shadow-card);
+  }
+
+  .bm-btn-outline {
+    background-color: transparent;
+    color: var(--color-leaf-900);
+    box-shadow: inset 0 0 0 1px var(--color-sand-300);
+  }
+
+  .bm-btn-outline:hover:not(:disabled) {
+    background-color: var(--color-leaf-50);
+    box-shadow: inset 0 0 0 1px var(--color-leaf-300);
+  }
+
+  .bm-btn-ghost {
+    background-color: transparent;
+    color: var(--color-ink-soft);
+    height: auto;
+    padding-inline: 0.25rem;
+  }
+
+  .bm-btn-ghost:hover:not(:disabled) {
+    color: var(--color-leaf-800);
+  }
+
+  .bm-btn-sm {
+    height: var(--spacing-control-sm);
+    padding-inline: 1.125rem;
+    font-size: 0.875rem;
+  }
+
+  /* Surfaces */
+  .bm-card {
+    background-color: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow:
+      inset 0 0 0 1px var(--color-line),
+      var(--shadow-soft);
+  }
+
+  /* Form controls */
+  .bm-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--color-ink);
+    margin-bottom: 0.5rem;
+  }
+
+  .bm-input {
+    width: 100%;
+    height: var(--spacing-control);
+    padding-inline: 1rem;
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface);
+    font-size: 0.9375rem;
+    color: var(--color-ink);
+    box-shadow: inset 0 0 0 1px var(--color-sand-300);
+    transition:
+      box-shadow 0.18s ease,
+      background-color 0.18s ease;
+  }
+
+  .bm-input::placeholder {
+    color: var(--color-sand-400);
+  }
+
+  .bm-input:hover:not(:disabled) {
+    box-shadow: inset 0 0 0 1px var(--color-sand-400);
+  }
+
+  .bm-input:focus {
+    outline: none;
+    box-shadow:
+      inset 0 0 0 1.5px var(--color-leaf-600),
+      0 0 0 4px var(--color-leaf-100);
+  }
+
+  .bm-input:disabled {
+    background-color: var(--color-sand-100);
+    color: var(--color-sand-500);
+  }
+}
+
+@layer utilities {
+  .bm-balance {
+    text-wrap: balance;
+  }
+
+  .bm-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Consistent, art-directed treatment for every product photograph. */
+  .bm-photo {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--color-sand-100);
+  }
+
+  .bm-photo > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+
+  /* Subtle warm vignette so mixed-sourced photography still reads as one
+     catalogue. Sits above the photo, never over text. */
+  .bm-photo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      rgba(252, 250, 247, 0.05) 0%,
+      rgba(252, 250, 247, 0) 40%,
+      rgba(42, 78, 50, 0.06) 100%
+    );
+  }
+
+  .bm-rule {
+    height: 1px;
+    background-color: var(--color-line);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

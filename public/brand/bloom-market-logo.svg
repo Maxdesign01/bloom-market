@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 200" role="img" aria-label="Bloom Market">
+  <title>Bloom Market</title>
+  <!-- Leaf -->
+  <path d="M40 150 C 8 148 0 128 4 106 C 26 108 44 124 40 150 Z" fill="#6FA83C"/>
+  <!-- Stem / tail that continues below the wordmark baseline -->
+  <path d="M148 126 C 152 152 150 176 142 196 L 158 196 C 165 174 166 150 162 126 Z" fill="#7CB342"/>
+  <!-- Two loops forming the "oo" of Bloom -->
+  <circle cx="58" cy="126" r="24" fill="none" stroke="#7CB342" stroke-width="12"/>
+  <circle cx="118" cy="126" r="24" fill="none" stroke="#7CB342" stroke-width="12"/>
+  <!-- Peony bloom: layered petals, light upper-left to deep crimson lower-right -->
+  <g>
+    <ellipse cx="88" cy="66" rx="58" ry="45" fill="#A81E4A"/>
+    <ellipse cx="52" cy="52" rx="36" ry="29" fill="#B93459"/>
+    <ellipse cx="124" cy="52" rx="36" ry="29" fill="#9A2A48"/>
+    <ellipse cx="88" cy="54" rx="48" ry="37" fill="#D24C72"/>
+    <ellipse cx="62" cy="40" rx="30" ry="24" fill="#E0718F"/>
+    <ellipse cx="114" cy="42" rx="28" ry="22" fill="#B93459"/>
+    <ellipse cx="84" cy="38" rx="34" ry="26" fill="#EC9FB5"/>
+    <ellipse cx="60" cy="24" rx="22" ry="17" fill="#F4C6D4"/>
+    <ellipse cx="108" cy="26" rx="20" ry="15" fill="#E0718F"/>
+    <ellipse cx="78" cy="18" rx="16" ry="12" fill="#FBE0EA"/>
+  </g>
+</svg>

@@ -1,16 +1,25 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+/**
+ * Fraunces carries the editorial voice — headings, prices and the wordmark.
+ * Inter handles all interface copy so it stays quiet and legible.
+ * Both are variable fonts, so weights come from the weight axis.
+ */
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
+  display: "swap",
+  axes: ["opsz", "SOFT", "WONK"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -20,25 +29,38 @@ export const metadata: Metadata = {
   },
   description:
     "Bloom Market is an online flower shop. Browse bouquets and plants, check out securely, and get an email confirmation for every order.",
+  applicationName: "Bloom Market",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/icon.svg" }],
+  },
+  openGraph: {
+    title: "Bloom Market — Fresh flowers, delivered",
+    description:
+      "Hand-tied bouquets and healthy houseplants, delivered across Lagos.",
+    type: "website",
+    siteName: "Bloom Market",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${fraunces.variable} ${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-zinc-50 text-zinc-900">
+      <body className="flex min-h-full flex-col bg-canvas text-ink">
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:bg-leaf-800 focus:px-4 focus:py-2 focus:text-sm focus:text-white"
+        >
+          Skip to content
+        </a>
         <Header />
-        <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        <main id="main" className="flex-1">
           {children}
         </main>
-        <footer className="border-t border-zinc-200 bg-white">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 text-sm text-zinc-500 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
-            <p>© {new Date().getFullYear()} Bloom Market</p>
-            <p>Payments secured by Paystack · Emails by Mailgun</p>
-          </div>
-        </footer>
+        <Footer />
       </body>
     </html>
   );

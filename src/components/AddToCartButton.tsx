@@ -39,32 +39,83 @@ export function AddToCartButton({
     return (
       <button
         disabled
-        className="inline-flex items-center rounded-lg bg-zinc-200 px-5 py-2.5 text-sm font-medium text-zinc-500 cursor-not-allowed"
+        className="bm-btn cursor-not-allowed bg-sand-200 text-sand-600 shadow-none"
       >
         Out of stock
       </button>
     );
   }
 
+  const styles =
+    status === "added"
+      ? "bg-leaf-600 text-white"
+      : status === "error"
+        ? "bg-bloom-600 text-white"
+        : "bm-btn-primary";
+
   return (
     <button
       onClick={add}
       disabled={status === "adding"}
-      className={`inline-flex items-center rounded-lg px-5 py-2.5 text-sm font-medium transition-colors disabled:opacity-60 ${
-        status === "added"
-          ? "bg-emerald-600 text-white"
-          : status === "error"
-            ? "bg-red-600 text-white"
-            : "bg-zinc-900 text-white hover:bg-zinc-700"
-      }`}
+      className={`bm-btn ${styles}`}
     >
-      {status === "adding"
-        ? "Adding…"
-        : status === "added"
-          ? "✓ Added"
-          : status === "error"
-            ? "Try again"
-            : "Add to cart"}
+      {status === "adding" ? (
+        <>
+          <Spinner />
+          Adding…
+        </>
+      ) : status === "added" ? (
+        <>
+          <CheckIcon />
+          Added to cart
+        </>
+      ) : status === "error" ? (
+        "Try again"
+      ) : (
+        "Add to cart"
+      )}
     </button>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      className="animate-spin"
+      aria-hidden
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        opacity="0.25"
+      />
+      <path
+        d="M21 12a9 9 0 0 0-9-9"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="m5 13 4.5 4.5L19 7"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

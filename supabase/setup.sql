@@ -1,7 +1,7 @@
-﻿
+
 -- ===== 0001_init.sql =====
 -- ============================================================
--- Bloom Market â€” initial schema (part 1: tables)
+-- Bloom Market — initial schema (part 1: tables)
 -- ============================================================
 
 -- ---------- PRODUCTS ----------
@@ -74,7 +74,7 @@ create index if not exists carts_user_id_idx on public.carts (user_id);
 
 -- ===== 0002_rls.sql =====
 -- ============================================================
--- Bloom Market â€” RLS policies + signup trigger
+-- Bloom Market — RLS policies + signup trigger
 -- ============================================================
 alter table public.products    enable row level security;
 alter table public.profiles    enable row level security;
@@ -130,7 +130,7 @@ create policy "order_items select own"
 
 -- ===== 0003_profile_trigger.sql =====
 -- ============================================================
--- Bloom Market â€” auto-create a profile row when a user signs up
+-- Bloom Market — auto-create a profile row when a user signs up
 -- ============================================================
 create or replace function public.handle_new_user()
 returns trigger
@@ -159,7 +159,7 @@ create trigger on_auth_user_created
 
 -- ===== 0004_seed_products.sql =====
 -- ============================================================
--- Bloom Market â€” seed products (prices in kobo, 1500000 = â‚¦15,000)
+-- Bloom Market — seed products (prices in kobo, 1500000 = ₦15,000)
 -- ============================================================
 insert into public.products (name, description, price, image_url, stock) values
   ('Red Rose Bouquet',   'A dozen long-stem red roses wrapped in kraft paper and tied with a satin ribbon.',  1500000, '/products/red-rose-bouquet.svg', 25),
@@ -175,7 +175,7 @@ on conflict do nothing;
 
 -- ===== 0005_decrement_stock.sql =====
 -- ============================================================
--- Bloom Market â€” atomic stock decrement (called by service role)
+-- Bloom Market — atomic stock decrement (called by service role)
 -- ============================================================
 create or replace function public.decrement_stock(
   p_product_id uuid,

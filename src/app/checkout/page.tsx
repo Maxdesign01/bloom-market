@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getCart, getOrCreateCartId } from "@/lib/cart";
 import { formatNaira } from "@/lib/format";
 import { CheckoutForm } from "@/components/CheckoutForm";
+import { PageHeader } from "@/components/PageHeader";
+import { Logo } from "@/components/Logo";
 
 export const dynamic = "force-dynamic";
 
@@ -38,80 +40,106 @@ export default async function CheckoutPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Checkout</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          You&apos;ll be redirected to Paystack to complete payment securely.
-        </p>
-      </div>
+    <>
+      <PageHeader
+        eyebrow="Step 2 of 2"
+        title="Checkout"
+        copy="Tell us where the flowers are going, then pay on Paystack's secure page."
+        crumbs={[
+          { href: "/", label: "Shop" },
+          { href: "/cart", label: "Your cart" },
+        ]}
+      />
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-        <section className="rounded-xl border border-zinc-200 bg-white p-6">
-          <h2 className="text-lg font-medium mb-4">Shipping details</h2>
-          <CheckoutForm
-            initialEmail={initialEmail}
-            initialName={initialName}
-            isEmpty={items.length === 0}
-          />
-        </section>
-
-        <aside className="rounded-xl border border-zinc-200 bg-white p-6 h-fit">
-          <h2 className="text-lg font-medium mb-4">Order summary</h2>
-
-          {items.length === 0 ? (
-            <div className="text-sm text-zinc-500">
-              Your cart is empty.{" "}
-              <Link href="/" className="text-emerald-700 underline">
-                Browse products
-              </Link>
+      <div className="bm-shell py-12 sm:py-16">
+        <div className="grid gap-8 lg:grid-cols-[1fr_22rem] lg:gap-10">
+          <section className="rounded-lg bg-surface p-6 shadow-soft ring-1 ring-line sm:p-8">
+            <div className="flex items-center gap-3 border-b border-line pb-5">
+              <Logo href="/" variant="mark" size={20} />
+              <h2 className="font-display text-xl font-medium">
+                Delivery details
+              </h2>
             </div>
-          ) : (
-            <>
-              <ul className="divide-y divide-zinc-100">
-                {items.map((item) => (
-                  <li
-                    key={item.id}
-                    className="flex items-start justify-between gap-3 py-3 text-sm"
-                  >
-                    <div>
-                      <p className="font-medium">{item.products?.name}</p>
-                      <p className="text-zinc-500">Qty {item.quantity}</p>
-                    </div>
-                    <span className="whitespace-nowrap">
-                      {formatNaira(
-                        (item.products?.price ?? 0) * item.quantity,
-                      )}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+            <div className="mt-7">
+              <CheckoutForm
+                initialEmail={initialEmail}
+                initialName={initialName}
+                isEmpty={items.length === 0}
+              />
+            </div>
+          </section>
 
-              <div className="mt-4 space-y-1 border-t border-zinc-200 pt-4 text-sm">
-                <div className="flex justify-between text-zinc-500">
-                  <span>Subtotal</span>
-                  <span>{formatNaira(subtotal)}</span>
-                </div>
-                <div className="flex justify-between text-zinc-500">
-                  <span>Delivery</span>
-                  <span>Free</span>
-                </div>
+          <aside className="h-fit rounded-lg bg-surface p-6 shadow-soft ring-1 ring-line lg:sticky lg:top-28">
+            <h2 className="font-display text-lg font-medium">Order summary</h2>
 
-                <div className="flex justify-between font-semibold text-base pt-2">
-                  <span>Total</span>
-                  <span>{formatNaira(subtotal)}</span>
-                </div>
-              </div>
-
-              <p className="mt-4 text-xs text-zinc-500">
-                Test mode: use card <strong>4242 4242 4242 4242</strong>, any
-                future expiry, any CVV.
+            {items.length === 0 ? (
+              <p className="mt-5 text-sm leading-relaxed text-ink-soft">
+                Your cart is empty.{" "}
+                <Link
+                  href="/#collection"
+                  className="text-leaf-700 underline underline-offset-4"
+                >
+                  Browse the collection
+                </Link>{" "}
+                to add something first.
               </p>
-            </>
-          )}
-        </aside>
+            ) : (
+              <>
+                <ul className="mt-6 space-y-4">
+                  {items.map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex items-start justify-between gap-3 text-sm"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-medium">{item.products?.name}</p>
+                        <p className="mt-0.5 text-ink-soft">
+                          Qty {item.quantity}
+                        </p>
+                      </div>
+                      <span className="shrink-0 tabular-nums">
+                        {formatNaira(
+                          (item.products?.price ?? 0) * item.quantity,
+                        )}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-6 space-y-3.5 border-t border-line pt-5 text-sm">
+                  <div className="flex justify-between gap-4 text-ink-soft">
+                    <span>Subtotal</span>
+                    <span className="tabular-nums">{formatNaira(subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between gap-4 text-ink-soft">
+                    <span>Delivery</span>
+                    <span className="font-medium text-leaf-700">Free</span>
+                  </div>
+
+                  <div className="flex items-baseline justify-between gap-4 border-t border-line pt-5">
+                    <span className="font-display text-lg font-medium">
+                      Total
+                    </span>
+                    <span className="font-display text-2xl font-semibold tabular-nums">
+                      {formatNaira(subtotal)}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="mt-6 rounded-sm bg-sand-100 px-4 py-3 text-xs leading-relaxed text-ink-soft">
+                  <strong className="font-semibold text-ink">Test mode.</strong>{" "}
+                  On Paystack use card{" "}
+                  <strong className="font-semibold text-ink">
+                    4242 4242 4242 4242
+                  </strong>{" "}
+                  with any future expiry and any CVV.
+                </p>
+              </>
+            )}
+          </aside>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

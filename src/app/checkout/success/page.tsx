@@ -25,19 +25,12 @@ export default async function PaymentSuccessPage({
 
   if (!reference) {
     return (
-      <div className="max-w-lg mx-auto text-center space-y-4 py-16">
-        <div className="text-5xl">🤔</div>
-        <h1 className="text-2xl font-semibold">Missing payment reference</h1>
-        <p className="text-zinc-500 text-sm">
-          We couldn&apos;t find a transaction to verify.
-        </p>
-        <Link
-          href="/"
-          className="inline-flex rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white"
-        >
-          Back to shop
-        </Link>
-      </div>
+      <StatusPanel
+        tone="sand"
+        title="Missing payment reference"
+        body="We couldn’t find a transaction to verify. If you were charged, email us and we’ll sort it out."
+        action={{ href: "/", label: "Back to the shop" }}
+      />
     );
   }
 
@@ -61,22 +54,12 @@ export default async function PaymentSuccessPage({
 
   if (!verified) {
     return (
-      <div className="max-w-lg mx-auto text-center space-y-4 py-16">
-        <div className="text-5xl">😞</div>
-        <h1 className="text-2xl font-semibold">Payment not completed</h1>
-        <p className="text-zinc-500 text-sm">
-          {verifyError ?? "Your payment was not successful."}
-        </p>
-        <p className="text-zinc-500 text-sm">
-          No charge was made, and your cart is still waiting for you.
-        </p>
-        <Link
-          href="/checkout"
-          className="inline-flex rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white"
-        >
-          Back to checkout
-        </Link>
-      </div>
+      <StatusPanel
+        tone="bloom"
+        title="Payment not completed"
+        body={`${verifyError ?? "Your payment was not successful."} No charge was made, and your cart is still waiting for you.`}
+        action={{ href: "/checkout", label: "Back to checkout" }}
+      />
     );
   }
 
@@ -89,20 +72,12 @@ export default async function PaymentSuccessPage({
 
   if (!order) {
     return (
-      <div className="max-w-lg mx-auto text-center space-y-4 py-16">
-        <div className="text-5xl">✅</div>
-        <h1 className="text-2xl font-semibold">Payment received</h1>
-        <p className="text-zinc-500 text-sm">
-          We couldn&apos;t find the matching order, but your payment of{" "}
-          {formatNaira(amount)} went through. Support will be in touch.
-        </p>
-        <Link
-          href="/"
-          className="inline-flex rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white"
-        >
-          Back to shop
-        </Link>
-      </div>
+      <StatusPanel
+        tone="leaf"
+        title="Payment received"
+        body={`We couldn’t find the matching order, but your payment of ${formatNaira(amount)} went through. Support will be in touch.`}
+        action={{ href: "/", label: "Back to the shop" }}
+      />
     );
   }
 
@@ -111,70 +86,130 @@ export default async function PaymentSuccessPage({
   void won;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div className="text-center space-y-3 py-8">
-        <div className="text-6xl">🎉</div>
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Payment successful!
+    <div className="bm-shell py-16 sm:py-20">
+      <div className="mx-auto max-w-2xl">
+        <div className="text-center">
+          <span className="mx-auto grid size-16 place-items-center rounded-full bg-leaf-100 text-leaf-700">
+            <CheckIcon />
+          </span>
+          <p className="bm-eyebrow mt-7">Payment successful</p>
+          <h1 className="mt-3 font-display text-4xl leading-tight font-semibold tracking-[-0.025em] text-balance sm:text-5xl">
+            Thank you — your flowers are reserved
+          </h1>
+          <p className="mx-auto mt-5 max-w-lg text-sm leading-relaxed text-ink-soft sm:text-base">
+            Order{" "}
+            <span className="font-mono text-ink">
+              {order.paystack_reference}
+            </span>{" "}
+            is confirmed.{" "}
+            {order.email_sent_at
+              ? "A confirmation email is on its way to your inbox."
+              : "We’re sending your confirmation email now."}
+          </p>
+        </div>
+
+        <div className="mt-12 overflow-hidden rounded-lg bg-surface shadow-soft ring-1 ring-line">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-sand-50 px-6 py-4 text-xs text-ink-soft">
+            <span>Paid via {channel || "card"}</span>
+            <span>{new Date(order.created_at).toLocaleString("en-NG")}</span>
+          </div>
+
+          <ul className="divide-y divide-line px-6">
+            {(order.order_items ?? []).map((item) => (
+              <li
+                key={item.id}
+                className="flex items-start justify-between gap-3 py-4 text-sm"
+              >
+                <div>
+                  <p className="font-medium">{item.name}</p>
+                  <p className="mt-0.5 text-ink-soft">Qty {item.quantity}</p>
+                </div>
+                <span className="shrink-0 tabular-nums">
+                  {formatNaira(item.price * item.quantity)}
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="flex items-baseline justify-between gap-4 border-t border-line px-6 py-5">
+            <span className="font-display text-lg font-medium">Total paid</span>
+            <span className="font-display text-2xl font-semibold tabular-nums">
+              {formatNaira(order.total)}
+            </span>
+          </div>
+
+          <div className="border-t border-line bg-sand-50 px-6 py-5 text-sm">
+            <p className="text-ink-soft">Delivering to</p>
+            <address className="mt-2 space-y-0.5 not-italic leading-relaxed text-ink">
+              <p className="font-medium">{order.full_name}</p>
+              <p>{order.address}</p>
+              <p>{order.phone}</p>
+            </address>
+          </div>
+        </div>
+
+        <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
+          <Link href="/orders" className="bm-btn bm-btn-primary">
+            View my orders
+          </Link>
+          <Link href="/#collection" className="bm-btn bm-btn-outline">
+            Continue shopping
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatusPanel({
+  tone,
+  title,
+  body,
+  action,
+}: {
+  tone: "sand" | "leaf" | "bloom";
+  title: string;
+  body: string;
+  action: { href: string; label: string };
+}) {
+  const toneClass =
+    tone === "leaf"
+      ? "bg-leaf-100 text-leaf-700"
+      : tone === "bloom"
+        ? "bg-bloom-50 text-bloom-600"
+        : "bg-sand-200 text-sand-600";
+
+  return (
+    <div className="bm-shell py-20 sm:py-28">
+      <div className="mx-auto max-w-lg text-center">
+        <span
+          className={`mx-auto grid size-16 place-items-center rounded-full ${toneClass}`}
+        >
+          <span className="font-display text-2xl font-semibold">BM</span>
+        </span>
+        <h1 className="mt-8 font-display text-3xl leading-tight font-semibold tracking-[-0.02em] text-balance sm:text-4xl">
+          {title}
         </h1>
-        <p className="text-zinc-500">
-          Order <span className="font-mono">{order.paystack_reference}</span> is
-          confirmed.
-          {order.email_sent_at
-            ? " A confirmation email is on its way to your inbox."
-            : " We're sending your confirmation email now."}
-        </p>
-      </div>
-
-      <div className="rounded-xl border border-zinc-200 bg-white p-6">
-        <div className="flex items-center justify-between text-sm text-zinc-500 mb-4">
-          <span>Paid via {channel || "card"}</span>
-          <span>{new Date(order.created_at).toLocaleString("en-NG")}</span>
-        </div>
-
-        <ul className="divide-y divide-zinc-100">
-          {(order.order_items ?? []).map((item) => (
-            <li
-              key={item.id}
-              className="flex items-start justify-between gap-3 py-3 text-sm"
-            >
-              <div>
-                <p className="font-medium">{item.name}</p>
-                <p className="text-zinc-500">Qty {item.quantity}</p>
-              </div>
-              <span>{formatNaira(item.price * item.quantity)}</span>
-            </li>
-          ))}
-        </ul>
-
-        <div className="mt-4 flex justify-between border-t border-zinc-200 pt-4 font-semibold">
-          <span>Total paid</span>
-          <span>{formatNaira(order.total)}</span>
-        </div>
-
-        <div className="mt-6 rounded-lg bg-zinc-50 p-4 text-sm text-zinc-600 space-y-1">
-          <p className="font-medium text-zinc-800">Delivering to</p>
-          <p>{order.full_name}</p>
-          <p>{order.address}</p>
-          <p>{order.phone}</p>
-        </div>
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-3 justify-center">
-        <Link
-          href="/orders"
-          className="inline-flex justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700"
-        >
-          View my orders
-        </Link>
-        <Link
-          href="/"
-          className="inline-flex justify-center rounded-lg border border-zinc-300 px-5 py-2.5 text-sm font-medium hover:bg-zinc-100"
-        >
-          Continue shopping
+        <p className="mt-4 text-sm leading-relaxed text-ink-soft">{body}</p>
+        <Link href={action.href} className="bm-btn bm-btn-primary mt-9">
+          {action.label}
         </Link>
       </div>
     </div>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="m5 13 4.5 4.5L19 7"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 

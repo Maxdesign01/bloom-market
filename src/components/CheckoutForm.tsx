@@ -5,14 +5,33 @@ import { useRouter } from "next/navigation";
 import type { CheckoutResponse } from "@/lib/types";
 
 const FIELDS = [
-  { name: "fullName", label: "Full name", type: "text", autoComplete: "name" },
-  { name: "email", label: "Email", type: "email", autoComplete: "email" },
-  { name: "phone", label: "Phone", type: "tel", autoComplete: "tel" },
+  {
+    name: "fullName",
+    label: "Full name",
+    type: "text",
+    autoComplete: "name",
+    placeholder: "Adaeze Okonkwo",
+  },
+  {
+    name: "email",
+    label: "Email",
+    type: "email",
+    autoComplete: "email",
+    placeholder: "you@example.com",
+  },
+  {
+    name: "phone",
+    label: "Phone",
+    type: "tel",
+    autoComplete: "tel",
+    placeholder: "+234 800 000 0000",
+  },
   {
     name: "address",
     label: "Delivery address",
     type: "text",
     autoComplete: "street-address",
+    placeholder: "12B Admiralty Way, Lekki Phase 1, Lagos",
   },
 ] as const;
 
@@ -84,31 +103,30 @@ export function CheckoutForm({
 
   if (isEmpty) {
     return (
-      <div className="rounded-lg border border-dashed border-zinc-300 p-6 text-sm text-zinc-500">
-        Add something to your cart before checking out.
+      <div className="rounded-lg border border-dashed border-sand-300 bg-sand-50 px-6 py-12 text-center">
+        <p className="text-sm text-ink-soft">
+          Your basket is empty, so there is nothing to check out yet.
+        </p>
         <button
           type="button"
-          onClick={() => router.push("/")}
-          className="ml-2 text-emerald-700 underline"
+          onClick={() => router.push("/#collection")}
+          className="bm-btn bm-btn-primary mt-6"
         >
-          Browse products
+          Browse the collection
         </button>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-      <div className="grid gap-4 sm:grid-cols-2">
+    <form onSubmit={handleSubmit} noValidate>
+      <div className="grid gap-5 sm:grid-cols-2">
         {FIELDS.map((field) => (
           <div
             key={field.name}
             className={field.name === "address" ? "sm:col-span-2" : undefined}
           >
-            <label
-              htmlFor={field.name}
-              className="block text-sm font-medium text-zinc-700 mb-1"
-            >
+            <label htmlFor={field.name} className="bm-label">
               {field.label}
             </label>
             <input
@@ -116,11 +134,13 @@ export function CheckoutForm({
               name={field.name}
               type={field.type}
               autoComplete={field.autoComplete}
+              placeholder={field.placeholder}
               value={values[field.name]}
               onChange={(e) => update(field.name, e.target.value)}
               disabled={submitting}
+              aria-invalid={Boolean(error)}
               required
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:bg-zinc-50"
+              className="bm-input"
             />
           </div>
         ))}
@@ -129,7 +149,7 @@ export function CheckoutForm({
       {error && (
         <div
           role="alert"
-          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          className="mt-6 rounded-sm border border-bloom-200 bg-bloom-50 px-4 py-3.5 text-sm text-bloom-800"
         >
           {error}
         </div>
@@ -138,15 +158,47 @@ export function CheckoutForm({
       <button
         type="submit"
         disabled={submitting}
-        className="w-full sm:w-auto inline-flex items-center justify-center rounded-lg bg-emerald-600 px-6 py-3 text-sm font-medium text-white hover:bg-emerald-700 transition-colors disabled:opacity-60"
+        className="bm-btn bm-btn-primary mt-8 w-full sm:w-auto"
       >
-        {submitting ? "Redirecting to Paystack…" : "Pay with Paystack →"}
+        {submitting ? "Redirecting to Paystack…" : "Continue to payment"}
       </button>
 
-      <p className="text-xs text-zinc-500">
-        You&apos;ll be taken to Paystack&apos;s secure page to complete payment.
-        We&apos;ll email your confirmation as soon as it clears.
+      <p className="mt-5 flex items-start gap-2 text-xs leading-relaxed text-ink-soft">
+        <LockIcon />
+        <span>
+          You&apos;ll be taken to Paystack&apos;s secure page to pay. We email your
+          confirmation the moment it clears.
+        </span>
       </p>
     </form>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+      className="mt-0.5 shrink-0"
+    >
+      <rect
+        x="4.5"
+        y="10.5"
+        width="15"
+        height="10"
+        rx="2.5"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <path
+        d="M8.5 10.5V7.8a3.5 3.5 0 1 1 7 0v2.7"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }

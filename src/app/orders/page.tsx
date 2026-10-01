@@ -3,15 +3,16 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatNaira } from "@/lib/format";
 import type { Order } from "@/lib/types";
+import { PageHeader } from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = { title: "My orders" };
 
 const STATUS_STYLES: Record<string, string> = {
-  paid: "bg-emerald-100 text-emerald-700",
-  pending: "bg-amber-100 text-amber-700",
-  failed: "bg-red-100 text-red-700",
+  paid: "bg-leaf-100 text-leaf-800",
+  pending: "bg-bloom-50 text-bloom-700",
+  failed: "bg-bloom-100 text-bloom-800",
 };
 
 export default async function OrdersPage() {
@@ -36,80 +37,106 @@ export default async function OrdersPage() {
   const orders = (data as unknown as Order[]) ?? [];
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">My orders</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Signed in as {user.email}
-        </p>
-      </div>
+    <>
+      <PageHeader
+        eyebrow="Signed in"
+        title="My orders"
+        copy={`Signed in as ${user.email}`}
+      />
 
-      {orders.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-zinc-300 bg-white p-12 text-center space-y-4">
-          <div className="text-5xl">📦</div>
-          <p className="text-zinc-600">You haven&apos;t placed an order yet.</p>
-          <Link
-            href="/"
-            className="inline-flex rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-700"
-          >
-            Start shopping
-          </Link>
-        </div>
-      ) : (
-        <ul className="space-y-4">
-          {orders.map((order) => (
-            <li
-              key={order.id}
-              className="rounded-xl border border-zinc-200 bg-white p-5"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="font-mono text-sm text-zinc-500">
-                    {order.paystack_reference ?? order.id.slice(0, 8)}
-                  </p>
-                  <p className="text-sm text-zinc-500">
-                    {new Date(order.created_at).toLocaleString("en-NG")}
-                  </p>
-                </div>
-                <span
-                  className={`inline-flex rounded-full px-3 py-1 text-xs font-medium capitalize ${
-                    STATUS_STYLES[order.status] ?? "bg-zinc-100 text-zinc-700"
-                  }`}
-                >
-                  {order.status}
-                </span>
-              </div>
-
-              <ul className="mt-4 divide-y divide-zinc-100 text-sm">
-                {(order.order_items ?? []).map((item) => (
-                  <li
-                    key={item.id}
-                    className="flex justify-between gap-3 py-2"
+      <div className="bm-shell py-12 sm:py-16">
+        {orders.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-sand-300 bg-surface px-8 py-20 text-center">
+            <span className="mx-auto grid size-14 place-items-center rounded-full bg-leaf-50 text-leaf-600">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path
+                  d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5v-9Z"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M3.5 7.5 12 12m0 0 8.5-4.5M12 12v9"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+            <h2 className="mt-6 font-display text-2xl font-medium">
+              No orders yet
+            </h2>
+            <p className="mx-auto mt-2.5 max-w-sm text-sm leading-relaxed text-ink-soft">
+              When you place an order it will appear here, with its payment
+              status and confirmation email state.
+            </p>
+            <Link href="/#collection" className="bm-btn bm-btn-primary mt-8">
+              Start shopping
+            </Link>
+          </div>
+        ) : (
+          <ul className="max-w-3xl space-y-5">
+            {orders.map((order) => (
+              <li
+                key={order.id}
+                className="overflow-hidden rounded-lg bg-surface shadow-soft ring-1 ring-line"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-sand-50 px-5 py-4 sm:px-6">
+                  <div>
+                    <p className="font-mono text-xs text-ink-soft">
+                      {order.paystack_reference ?? order.id.slice(0, 8)}
+                    </p>
+                    <p className="mt-1 text-xs text-ink-soft">
+                      {new Date(order.created_at).toLocaleString("en-NG")}
+                    </p>
+                  </div>
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.6875rem] font-medium tracking-[0.04em] uppercase ${
+                      STATUS_STYLES[order.status] ??
+                      "bg-sand-200 text-sand-700"
+                    }`}
                   >
-                    <span>
-                      {item.name} <span className="text-zinc-500">× {item.quantity}</span>
-                    </span>
-                    <span>{formatNaira(item.price * item.quantity)}</span>
-                  </li>
-                ))}
-              </ul>
+                    <span className="size-1.5 rounded-full bg-current opacity-70" />
+                    {order.status}
+                  </span>
+                </div>
 
-              <div className="mt-3 flex justify-between border-t border-zinc-200 pt-3 text-sm font-semibold">
-                <span>Total</span>
-                <span>{formatNaira(order.total)}</span>
-              </div>
+                <ul className="divide-y divide-line px-5 text-sm sm:px-6">
+                  {(order.order_items ?? []).map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex justify-between gap-3 py-3.5"
+                    >
+                      <span>
+                        {item.name}{" "}
+                        <span className="text-ink-soft">× {item.quantity}</span>
+                      </span>
+                      <span className="shrink-0 tabular-nums">
+                        {formatNaira(item.price * item.quantity)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
 
-              <p className="mt-3 text-xs text-zinc-500">
-                {order.email_sent_at
-                  ? "✓ Confirmation email sent"
-                  : order.status === "paid"
-                    ? "Confirmation email being sent…"
-                    : "No confirmation email yet"}
-              </p>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+                <div className="flex items-baseline justify-between gap-4 border-t border-line px-5 py-4 sm:px-6">
+                  <span className="font-display text-lg font-medium">Total</span>
+                  <span className="font-display text-xl font-semibold tabular-nums">
+                    {formatNaira(order.total)}
+                  </span>
+                </div>
+
+                <p className="border-t border-line bg-sand-50 px-5 py-3.5 text-xs text-ink-soft sm:px-6">
+                  {order.email_sent_at
+                    ? "Confirmation email sent"
+                    : order.status === "paid"
+                      ? "Confirmation email being sent…"
+                      : "No confirmation email yet"}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </>
   );
 }
