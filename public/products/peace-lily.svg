@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Peace Lily">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ecfdf5"/>
+      <stop offset="100%" stop-color="#bbf7d0"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)"/>
+  <g transform="translate(200 150)">
+    <path d="M0 62 C -6 20 -30 4 -44 -14 M0 62 C 6 24 32 6 46 -12 M0 62 L0 -34" stroke="#166534" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M-44 -14 C -60 -30 -58 -46 -44 -46 C -32 -46 -30 -30 -44 -14 Z" fill="#ffffff" stroke="#d1d5db" stroke-width="2"/>
+    <path d="M46 -12 C 62 -28 60 -44 46 -44 C 34 -44 32 -28 46 -12 Z" fill="#ffffff" stroke="#d1d5db" stroke-width="2"/>
+    <ellipse cx="0" cy="-40" rx="9" ry="16" fill="#facc15"/>
+    <path d="M-26 60 L26 60 L18 100 L-18 100 Z" fill="#78716c"/>
+  </g>
+  <text x="200" y="272" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#14532d" text-anchor="middle">Peace Lily</text>
+</svg>

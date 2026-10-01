@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Sunflower Bunch">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fef9c3"/>
+      <stop offset="100%" stop-color="#fde68a"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)"/>
+  <g transform="translate(200 150)">
+    <path d="M0 70 L-8 -6 M0 70 L14 -4 M0 70 L-22 4" stroke="#166534" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <g transform="translate(-8 -14)">
+      <circle r="30" fill="#facc15"/>
+      <circle r="16" fill="#78350f"/>
+    </g>
+    <g transform="translate(16 -6)">
+      <circle r="24" fill="#fde047"/>
+      <circle r="12" fill="#78350f"/>
+    </g>
+    <g transform="translate(-26 6)">
+      <circle r="20" fill="#facc15"/>
+      <circle r="10" fill="#78350f"/>
+    </g>
+  </g>
+  <text x="200" y="272" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#713f12" text-anchor="middle">Sunflower Bunch</text>
+</svg>
