@@ -64,14 +64,14 @@ function Hero({ hero }: { hero: Product | undefined }) {
 
       <div className="bm-shell relative grid items-center gap-14 py-16 sm:py-20 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:py-28">
         <div>
-          <span className="inline-flex items-center gap-2.5 rounded-full border border-leaf-200 bg-leaf-50/80 py-1.5 pr-4 pl-1.5 text-xs font-medium text-leaf-800">
+          <span className="bm-enter inline-flex items-center gap-2.5 rounded-full border border-leaf-200 bg-leaf-50/80 py-1.5 pr-4 pl-1.5 text-xs font-medium text-leaf-800" data-bm-delay="1">
             <span className="grid size-6 place-items-center rounded-full bg-leaf-800 text-sand-50">
               <BloomMark className="h-3.5 w-auto" title={null} />
             </span>
             Lagos&apos;s freshest stems
           </span>
 
-          <h1 className="mt-7 font-display text-5xl leading-[1.03] font-semibold tracking-[-0.03em] text-balance sm:text-6xl lg:text-7xl">
+          <h1 className="bm-enter mt-7 font-display text-5xl leading-[1.03] font-semibold tracking-[-0.03em] text-balance sm:text-6xl lg:text-7xl" data-bm-delay="2">
             Flowers that say
             <span className="relative ml-3 inline-block text-bloom-600 italic">
               it better
@@ -92,13 +92,13 @@ function Hero({ hero }: { hero: Product | undefined }) {
             </span>
           </h1>
 
-          <p className="mt-7 max-w-lg text-base leading-relaxed text-ink-soft sm:text-lg">
+          <p className="bm-enter mt-7 max-w-lg text-base leading-relaxed text-ink-soft sm:text-lg" data-bm-delay="3">
             Hand-tied bouquets and healthy houseplants, conditioned at dawn and
             delivered across Lagos the same day. Pay securely, then watch for
             your confirmation email.
           </p>
 
-          <div className="mt-9 flex flex-wrap items-center gap-3">
+          <div className="bm-enter mt-9 flex flex-wrap items-center gap-3" data-bm-delay="4">
             <Link href="#collection" className="bm-btn bm-btn-primary">
               Shop the collection
             </Link>
@@ -107,7 +107,7 @@ function Hero({ hero }: { hero: Product | undefined }) {
             </Link>
           </div>
 
-          <dl className="mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-line pt-8">
+          <dl className="bm-enter mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-line pt-8" data-bm-delay="5">
             {[
               ["8", "Seasonal designs"],
               ["Same day", "Lagos delivery"],
@@ -125,7 +125,7 @@ function Hero({ hero }: { hero: Product | undefined }) {
           </dl>
         </div>
 
-        <div className="relative">
+        <div className="bm-enter relative" data-bm-delay="3">
           <div className="relative overflow-hidden rounded-2xl bg-surface shadow-lift">
             <div className="bm-photo aspect-4/5 sm:aspect-square lg:aspect-4/5">
               {hero?.image_url && (
@@ -177,12 +177,12 @@ function Occasions({
           copy="Every bouquet starts with a reason to send it."
         />
 
-        <ul className="mt-12 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-5">
+        <ul className="mt-12 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-5" data-bm-stagger="">
           {occasions.map((occasion) => (
-            <li key={occasion.label}>
+            <li key={occasion.label} data-bm-reveal="">
               <Link
                 href={`/products/${occasion.product.id}`}
-                className="group flex flex-col items-center gap-3 rounded-lg border border-line bg-surface p-5 text-center shadow-xs transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-card"
+                className="group flex flex-col items-center gap-3 rounded-lg border border-line bg-surface p-5 text-center shadow-xs transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:shadow-card"
               >
                 <span className="grid size-14 place-items-center rounded-full bg-leaf-50 text-leaf-700 ring-1 ring-leaf-100 transition-colors group-hover:bg-leaf-100">
                   <BloomMark className="h-6 w-auto" title={null} />
@@ -236,7 +236,7 @@ function Collection({
         ) : products.length === 0 ? (
           <EmptyCatalogue />
         ) : (
-          <ul className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <ul className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4" data-bm-stagger="">
             {products.slice(0, 8).map((product, index) => (
               <ProductCard
                 key={product.id}
@@ -256,7 +256,7 @@ function EditorialPair({ products }: { products: Product[] }) {
 
   return (
     <section className="py-4 sm:py-8">
-      <div className="bm-shell grid gap-6 lg:grid-cols-2">
+      <div className="bm-shell grid gap-6 lg:grid-cols-2" data-bm-stagger="">
         <EditorialCard
           product={products[1]}
           eyebrow="Best seller"
@@ -280,7 +280,7 @@ function DeliveryCare() {
   return (
     <section id="delivery" className="scroll-mt-28 py-20 sm:py-24">
       <div className="bm-shell">
-        <div className="overflow-hidden rounded-2xl bg-leaf-900 px-6 py-14 text-center sm:px-14 sm:py-16">
+        <div className="overflow-hidden rounded-2xl bg-leaf-900 px-6 py-14 text-center sm:px-14 sm:py-16" data-bm-reveal="">
           <p className="text-[0.6875rem] font-semibold tracking-[0.18em] text-leaf-300 uppercase">
             Delivery &amp; care
           </p>
@@ -294,7 +294,7 @@ function DeliveryCare() {
             dry.
           </p>
 
-          <ul className="mx-auto mt-12 grid max-w-4xl gap-6 sm:grid-cols-3">
+          <ul className="mx-auto mt-12 grid max-w-4xl gap-6 sm:grid-cols-3" data-bm-stagger="">
             {[
               [
                 "Cut flowers",
@@ -311,6 +311,7 @@ function DeliveryCare() {
             ].map(([title, body]) => (
               <li
                 key={title}
+                data-bm-reveal=""
                 className="rounded-lg border border-leaf-800 bg-leaf-950/40 px-6 py-7 text-left"
               >
                 <h3 className="font-display text-lg font-medium text-sand-50">
@@ -347,7 +348,7 @@ function OurStory({ products }: { products: Product[] }) {
   return (
     <section id="about" className="scroll-mt-28 py-20 sm:py-28">
       <div className="bm-shell grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
-        <div>
+        <div data-bm-reveal="">
           <p className="bm-eyebrow">Our story</p>
           <h2 className="mt-4 font-display text-4xl leading-[1.08] font-semibold tracking-[-0.025em] text-balance sm:text-5xl">
             A small bench, a strict routine, and flowers that last the week
@@ -382,10 +383,11 @@ function OurStory({ products }: { products: Product[] }) {
           </dl>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4" data-bm-stagger="">
           {products.slice(3, 5).map((product) => (
             <div
               key={product.id}
+              data-bm-reveal=""
               className="overflow-hidden rounded-lg shadow-card"
             >
               <div className="bm-photo aspect-3/4">

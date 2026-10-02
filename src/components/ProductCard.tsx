@@ -18,10 +18,10 @@ export function ProductCard({
   const lowStock = !soldOut && product.stock <= 5;
 
   return (
-    <li className="h-full">
+    <li className="h-full" data-bm-reveal="">
       <Link
         href={`/products/${product.id}`}
-        className="group flex h-full flex-col overflow-hidden rounded-lg bg-surface shadow-soft ring-1 ring-line transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-lift focus-visible:-translate-y-1"
+        className="group flex h-full flex-col overflow-hidden rounded-lg bg-surface shadow-soft ring-1 ring-line transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:scale-[1.015] hover:shadow-lift focus-visible:-translate-y-1 focus-visible:scale-[1.015]"
       >
         <div className="bm-photo aspect-4/5">
           {product.image_url ? (

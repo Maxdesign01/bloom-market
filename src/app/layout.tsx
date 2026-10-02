@@ -3,6 +3,7 @@ import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { RevealOnScroll } from "@/components/RevealOnScroll";
 
 /**
  * Fraunces carries the editorial voice — headings, prices and the wordmark.
@@ -47,9 +48,28 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      // The inline script below adds `bm-motion` to <html> before React
+      // hydrates, so the client class list is intentionally one class longer
+      // than the server-rendered one. Opting out of that single comparison is
+      // what keeps the console clean.
+      suppressHydrationWarning
       className={`${fraunces.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-canvas text-ink">
+        {/*
+          Runs while the browser parses the opening body, so it lands before
+          the first paint. Only visitors who have not asked for reduced motion
+          get `bm-motion`, which is what unlocks the hidden start state of the
+          scroll reveals. Without it — and without JavaScript — every reveal
+          renders already visible.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('bm-motion')}}catch(e){}",
+          }}
+        />
+        <RevealOnScroll />
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:bg-leaf-800 focus:px-4 focus:py-2 focus:text-sm focus:text-white"

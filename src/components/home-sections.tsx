@@ -11,7 +11,7 @@ export function SectionHeading({
   copy: string;
 }) {
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl" data-bm-reveal="">
       <p className="bm-eyebrow">{eyebrow}</p>
       <h2 className="mt-3 font-display text-3xl leading-tight font-semibold tracking-[-0.02em] text-balance sm:text-4xl">
         {title}
@@ -38,11 +38,18 @@ export function EditorialCard({
 }) {
   return (
     <article
+      data-bm-reveal=""
       className={`group relative overflow-hidden rounded-2xl p-8 sm:p-10 ${
         tone === "bloom" ? "bg-bloom-50" : "bg-leaf-50"
       }`}
     >
-      <div className="relative z-10 max-w-[22rem]">
+      {/*
+        The circular product shot bleeds off the bottom-right corner, so the text
+        column is capped to a percentage that always stops short of it. Sizing in %
+        rather than rem is what keeps this correct from 320px to 1280px, where the
+        card itself changes width considerably.
+      */}
+      <div className="relative z-10 max-w-[60%] sm:max-w-[70%] lg:max-w-[60%] xl:max-w-[70%]">
         <p
           className={`text-[0.6875rem] font-semibold tracking-[0.18em] uppercase ${
             tone === "bloom" ? "text-bloom-600" : "text-leaf-600"
@@ -53,7 +60,7 @@ export function EditorialCard({
         <h3 className="mt-3 font-display text-2xl leading-tight font-semibold tracking-[-0.02em] text-balance sm:text-3xl">
           {title}
         </h3>
-        <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-ink-soft">
+        <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-ink-soft sm:line-clamp-2">
           {product.description}
         </p>
         <Link
@@ -67,7 +74,7 @@ export function EditorialCard({
       </div>
 
       <div
-        className="pointer-events-none absolute -right-6 -bottom-10 h-56 w-56 overflow-hidden rounded-full shadow-card transition-transform duration-500 group-hover:scale-105 sm:h-64 sm:w-64"
+        className="pointer-events-none absolute -right-4 -bottom-6 h-28 w-28 overflow-hidden rounded-full shadow-card transition-transform duration-500 group-hover:scale-105 sm:-right-8 sm:-bottom-10 sm:h-48 sm:w-48"
         aria-hidden
       >
         {product.image_url && (

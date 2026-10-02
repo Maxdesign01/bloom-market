@@ -104,6 +104,28 @@
   }
 }
 
+/* ==========================================================================
+   Motion
+   Every effect below is opt-in and animates opacity + transform only, so it
+   stays on the compositor and can never reflow or shift layout.
+
+   The hidden start state lives behind `html.bm-motion`, a class the root layout
+   adds before first paint and only when the visitor has *not* asked for reduced
+   motion. That keeps reveals from flashing while leaving no-JS, blocked-JS and
+   reduced-motion visitors with fully visible, static content.
+   ========================================================================== */
+
+@keyframes bm-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
@@ -211,14 +233,17 @@
     box-shadow: var(--shadow-card);
   }
 
+  /* Contrast: white on bloom-500 is only 4.19:1, which fails WCAG AA (4.5:1)
+     for this 0.875rem label. bloom-600 gives 5.68:1 and bloom-700 gives
+     7.5:1, so the button keeps its rose identity but is actually legible. */
   .bm-btn-bloom {
-    background-color: var(--color-bloom-500);
+    background-color: var(--color-bloom-600);
     color: #fff;
     box-shadow: var(--shadow-soft);
   }
 
   .bm-btn-bloom:hover:not(:disabled) {
-    background-color: var(--color-bloom-600);
+    background-color: var(--color-bloom-700);
     box-shadow: var(--shadow-card);
   }
 
@@ -242,6 +267,11 @@
 
   .bm-btn-ghost:hover:not(:disabled) {
     color: var(--color-leaf-800);
+  }
+
+  /* A whisper of press feedback on tap/click. */
+  .bm-btn:active:not(:disabled) {
+    transform: scale(0.985);
   }
 
   .bm-btn-sm {
@@ -346,6 +376,88 @@
   .bm-rule {
     height: 1px;
     background-color: var(--color-line);
+  }
+
+  /* --- Scroll reveal ------------------------------------------------------
+     Opt in with `data-bm-reveal` on any element; <RevealOnScroll /> adds
+     `is-in` the first time that element intersects the viewport. Keyed off the
+     attribute itself, so no extra class has to be threaded through markup. */
+  [data-bm-reveal] {
+    opacity: 1;
+  }
+
+  .bm-motion [data-bm-reveal] {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+    transition:
+      opacity 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .bm-motion [data-bm-reveal].is-in {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Manual stagger for one-off pairs. */
+  .bm-motion [data-bm-reveal][data-bm-delay="1"] {
+    transition-delay: 70ms;
+  }
+  .bm-motion [data-bm-reveal][data-bm-delay="2"] {
+    transition-delay: 140ms;
+  }
+  .bm-motion [data-bm-reveal][data-bm-delay="3"] {
+    transition-delay: 210ms;
+  }
+
+  /* Cascade for grids and rows: put data-bm-stagger on the parent and its
+     direct children reveal in sequence instead of as one flat block. */
+  .bm-motion [data-bm-stagger] > *:nth-child(1) {
+    transition-delay: 0ms;
+  }
+  .bm-motion [data-bm-stagger] > *:nth-child(2) {
+    transition-delay: 60ms;
+  }
+  .bm-motion [data-bm-stagger] > *:nth-child(3) {
+    transition-delay: 120ms;
+  }
+  .bm-motion [data-bm-stagger] > *:nth-child(4) {
+    transition-delay: 180ms;
+  }
+  .bm-motion [data-bm-stagger] > *:nth-child(5) {
+    transition-delay: 240ms;
+  }
+  .bm-motion [data-bm-stagger] > *:nth-child(6) {
+    transition-delay: 300ms;
+  }
+  .bm-motion [data-bm-stagger] > *:nth-child(n + 7) {
+    transition-delay: 360ms;
+  }
+
+  /* --- Page-load entrance -------------------------------------------------
+     A one-shot rise for above-the-fold content. `data-bm-delay` staggers it. */
+  .bm-enter {
+    opacity: 1;
+  }
+
+  .bm-motion .bm-enter {
+    animation: bm-rise 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .bm-motion .bm-enter[data-bm-delay="1"] {
+    animation-delay: 60ms;
+  }
+  .bm-motion .bm-enter[data-bm-delay="2"] {
+    animation-delay: 120ms;
+  }
+  .bm-motion .bm-enter[data-bm-delay="3"] {
+    animation-delay: 180ms;
+  }
+  .bm-motion .bm-enter[data-bm-delay="4"] {
+    animation-delay: 240ms;
+  }
+  .bm-motion .bm-enter[data-bm-delay="5"] {
+    animation-delay: 300ms;
   }
 }
 
