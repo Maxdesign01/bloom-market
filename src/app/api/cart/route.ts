@@ -4,15 +4,14 @@ import {
   cartCount,
   clearCart,
   getCart,
-  getCartCookie,
-  getOrCreateCartId,
+  resolveCartId,
   setCartQuantity,
 } from "@/lib/cart";
 
 /** GET /api/cart — current cart + item count for the badge. */
 export async function GET() {
   try {
-    const cartId = await getOrCreateCartId();
+    const cartId = await resolveCartId();
     const cart = await getCart(cartId);
     return NextResponse.json({
       cart,
@@ -83,7 +82,7 @@ export async function PATCH(req: NextRequest) {
 /** DELETE /api/cart — empty the cart. */
 export async function DELETE() {
   try {
-    const cartId = await getCartCookie();
+    const cartId = await resolveCartId();
     await clearCart(cartId);
     const cart = await getCart(cartId);
     return NextResponse.json({ cart, count: cartCount(cart) });

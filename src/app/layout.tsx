@@ -1,8 +1,11 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
+import { CartSync } from "@/components/CartSync";
+import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 import { Footer } from "@/components/Footer";
+import { MobileTabBar } from "@/components/MobileTabBar";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
 
 /**
@@ -31,9 +34,22 @@ export const metadata: Metadata = {
   description:
     "Bloom Market is an online flower shop. Browse bouquets and plants, check out securely, and get an email confirmation for every order.",
   applicationName: "Bloom Market",
+  // Serves /manifest.webmanifest, which makes the app installable on Android
+  // Chrome, iOS Safari and desktop.
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    // Hides the Safari address bar so the installed app opens without browser
+    // chrome, matching the Android standalone experience.
+    title: "Bloom Market",
+    statusBarStyle: "black-translucent",
+  },
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/icon.svg" }],
+    apple: [
+      // iOS ignores the SVG icon and requires a raster `apple-touch-icon`.
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180" },
+    ],
   },
   openGraph: {
     title: "Bloom Market — Fresh flowers, delivered",
@@ -42,6 +58,26 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "Bloom Market",
   },
+  other: {
+    /*
+     * iOS reads `apple-mobile-web-app-capable` and ignores
+     * `mobile-web-app-capable`, which is what `appleWebApp.capable` emits for
+     * Chrome/Android. Both are needed: without the Apple one, iOS still opens
+     * the installed app in a Safari-style tab bar.
+     */
+    "apple-mobile-web-app-capable": "yes",
+  },
+};
+
+export const viewport: Viewport = {
+  // Tints the Android status bar and the installed app's title bar to the brand
+  // green. Matches `theme_color` in the manifest.
+  themeColor: "#1f3b26",
+  // Deliberately no `viewport-fit=cover`: the layout has no
+  // `env(safe-area-inset-*)` padding, so opting into a notched display would
+  // slide content underneath the status bar and home indicator.
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -77,10 +113,19 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         <Header />
-        <main id="main" className="flex-1">
+        <CartSync />
+        <ServiceWorkerRegistrar />
+        {/*
+          `pb-20` reserves the height of the mobile tab bar so the footer's last
+          row is never trapped underneath it. `lg:pb-0` hands that space back on
+          desktop, where the bar does not render at all — so the desktop layout
+          is byte-for-byte the same as before.
+        */}
+        <main id="main" className="flex-1 pb-20 lg:pb-0">
           {children}
         </main>
         <Footer />
+        <MobileTabBar />
       </body>
     </html>
   );

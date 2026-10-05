@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getOrderByReference, markOrderPaid } from "@/lib/orders";
 import { verifyTransaction } from "@/lib/paystack";
-import { clearCart, getCartCookie } from "@/lib/cart";
+import { clearCart, resolveCartId } from "@/lib/cart";
 import { formatNaira } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -68,7 +68,7 @@ export default async function PaymentSuccessPage({
   const order = await getOrderByReference(reference);
 
   // Empty the cart now that payment succeeded.
-  await clearCart(await getCartCookie());
+  await clearCart(await resolveCartId());
 
   if (!order) {
     return (

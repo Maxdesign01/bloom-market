@@ -9,11 +9,15 @@ import { Logo } from "@/components/Logo";
 
 type CartBadgeState = { count: number };
 
+// `/` and `/shop` are distinct routes, so the home link reads "Home" here
+// to keep the two labels unambiguous now that both appear in the nav.
 const NAV = [
-  { href: "/", label: "Shop" },
+  { href: "/", label: "Home" },
+  { href: "/shop", label: "Shop" },
   { href: "/#occasions", label: "Occasions" },
   { href: "/#about", label: "Our story" },
   { href: "/orders", label: "Orders", requiresAuth: true },
+  { href: "/profile", label: "Account" },
 ];
 
 export function Header() {
@@ -143,7 +147,10 @@ export function Header() {
             >
               <BagIcon />
               {cart.count > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 grid min-w-[1.25rem] place-items-center rounded-full bg-bloom-500 px-1 text-[0.625rem] font-semibold text-white tabular-nums">
+                // Below `lg` the fixed tab bar already carries the count, so the
+                // badge is suppressed here to avoid showing it twice on one
+                // screen. `aria-label` above still announces the item count.
+                <span className="absolute -top-0.5 -right-0.5 hidden min-w-[1.25rem] place-items-center rounded-full bg-bloom-500 px-1 text-[0.625rem] font-semibold text-white tabular-nums lg:grid">
                   {badge}
                 </span>
               )}
@@ -182,7 +189,11 @@ export function Header() {
 
 
       {menuOpen && (
-        <div className="fixed inset-0 top-[6.75rem] z-30 lg:hidden">
+        // Ends above the mobile tab bar (`h-16`) so the sheet can never sit
+        // on top of it — `design.md`: page content must not overlap the
+        // bottom navigation. Both are mobile-only, so they share the `lg`
+        // cutoff rather than being reconciled at each breakpoint.
+        <div className="fixed inset-x-0 top-[6.75rem] bottom-16 z-30 lg:hidden">
           <button
             type="button"
             aria-hidden

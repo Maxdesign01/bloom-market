@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { randomUUID } from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { cartSubtotal, getCart, getOrCreateCartId } from "@/lib/cart";
+import { cartSubtotal, getCart, resolveCartId } from "@/lib/cart";
 import { initializeTransaction } from "@/lib/paystack";
 import type { CheckoutPayload, CheckoutResponse } from "@/lib/types";
 
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     }
 
     // --- Server-side cart ---
-    const cartId = await getOrCreateCartId();
+    const cartId = await resolveCartId();
     const cart = await getCart(cartId);
     const items = cart?.cart_items ?? [];
 

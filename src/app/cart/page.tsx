@@ -1,5 +1,5 @@
 import { CartView } from "@/components/CartView";
-import { getCart, getOrCreateCartId } from "@/lib/cart";
+import { getCart, resolveCartId } from "@/lib/cart";
 import { PageHeader } from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Your cart" };
 
 export default async function CartPage() {
-  const cart = await getCart(await getOrCreateCartId());
+  const cart = await getCart(await resolveCartId());
   const items = cart?.cart_items ?? [];
   const subtotal = items.reduce(
     (sum, i) => sum + (i.products?.price ?? 0) * i.quantity,

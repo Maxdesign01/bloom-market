@@ -17,6 +17,17 @@ export function CartView({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // `useState` only seeds once, so fresh server props would otherwise be
+  // ignored. `router.refresh()` — how a change made on another device
+  // reaches this page — sends new props, and we re-seed during render
+  // rather than in an effect to avoid a cascading extra render.
+  const [seed, setSeed] = useState({ items: initialItems, subtotal });
+  if (seed.items !== initialItems) {
+    setSeed({ items: initialItems, subtotal: initialSubtotal });
+    setItems(initialItems);
+    setSubtotal(initialSubtotal);
+  }
+
   async function patch(productId: string, quantity: number) {
     setBusyId(productId);
     setError(null);

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getCart, getOrCreateCartId } from "@/lib/cart";
+import { getCart, resolveCartId } from "@/lib/cart";
 import { formatNaira } from "@/lib/format";
 import { CheckoutForm } from "@/components/CheckoutForm";
 import { PageHeader } from "@/components/PageHeader";
@@ -32,7 +32,7 @@ export default async function CheckoutPage() {
   }
 
   // Load the cart for the summary panel.
-  const cart = await getCart(await getOrCreateCartId());
+  const cart = await getCart(await resolveCartId());
   const items = cart?.cart_items ?? [];
   const subtotal = items.reduce(
     (sum, i) => sum + (i.products?.price ?? 0) * i.quantity,
