@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -9,80 +9,124 @@ import { createClient } from "@/lib/supabase/client";
  * cart while it is open.
  *
  * Carts are account-owned as of migration 0007, so a change made on a
- * phone should be reflected on a laptop and vice versa. Rather than
- * trusting the payload — which would only carry the changed row, not the
- * whole basket — we simply re-read the cart, letting the existing
- * `cart:updated` event drive both the header badge and the cart page.
+ * phone is automatically reflected on a laptop and vice versa.
  *
- * Renders nothing. Depends on migration 0007 for the `cart_items` Realtime
- * publication and its owner-scoped SELECT policy.
+ * Realtime architecture:
+ * 1. Authenticate Realtime with user JWT so owner-scoped RLS policies apply.
+ * 2. Subscribe to postgres_changes on cart_items.
+ * 3. Treat payload purely as a signal: re-fetch the complete authoritative cart.
+ * 4. Dispatch `cart:updated` event to update all client UI and call router.refresh().
+ * 5. Handle reconnections and clean teardown on sign out or unmount.
  */
 export function CartSync() {
   const router = useRouter();
+  const currentUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
-    let debounce: ReturnType<typeof setTimeout> | undefined;
-
-    // Unique per mount so each subscription gets a channel that is guaranteed
-    // not to collide with one left mid-teardown by an earlier `start()`.
-    const instanceId = Math.random().toString(36).slice(2);
+    let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+    let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let isMounted = true;
 
     const notify = () => {
-      if (debounce) clearTimeout(debounce);
-      // A merge can move several lines at once; collapse that burst into a
-      // single refetch instead of hammering the API once per row.
-      debounce = setTimeout(() => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        if (!isMounted) return;
         window.dispatchEvent(new CustomEvent("cart:updated"));
         router.refresh();
-      }, 300);
+      }, 250);
     };
-
-    // Subscriptions are created only for signed-in users: a guest cart is
-    // cookie-scoped, has no `user_id`, and the RLS policy would match
-    // nothing anyway.
-    let channel: ReturnType<typeof supabase.channel> | null = null;
 
     const stop = () => {
-      if (!channel) return;
-      // `removeChannel` — not `channel.unsubscribe()` — is required here.
-      // `channel(topic)` returns the *existing* channel for that topic, and
-      // the Realtime client only stops handing back a stale one after
-      // `removeChannel` has fully torn it down. With plain `unsubscribe()` the
-      // async teardown had not finished by the time the next `start()` ran,
-      // `channel()` handed back the still-subscribed instance, and `on()`
-      // threw "cannot add `postgres_changes` callbacks ... after `subscribe()`".
-      void supabase.removeChannel(channel);
-      channel = null;
+      if (channel) {
+        void supabase.removeChannel(channel);
+        channel = null;
+      }
     };
 
-    const start = (signedIn: boolean) => {
+    const start = async (token: string | null, userId: string | null) => {
       stop();
-      if (!signedIn) return;
+      if (!isMounted || !userId || !token) {
+        currentUserIdRef.current = null;
+        return;
+      }
 
-      // A unique topic per subscription guarantees a fresh channel rather
-      // than a possibly still-joining leftover, so the `.on()` below is always
-      // legal. It is scoped to this tab and instance only — nothing else
-      // subscribes to it.
+      currentUserIdRef.current = userId;
+
+      try {
+        await supabase.realtime.setAuth(token);
+      } catch (err) {
+        console.warn("[CartSync] setAuth error:", err);
+      }
+
+      if (!isMounted) return;
+
+      const instanceId = Math.random().toString(36).slice(2, 8);
+      const topic = `bm-cart-${userId}-${instanceId}`;
+
       channel = supabase
-        .channel(`bm-cart-sync-${instanceId}`)
+        .channel(topic)
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "cart_items" },
-          notify,
+          () => {
+            notify();
+          },
         )
-        .subscribe();
+        .subscribe((status, err) => {
+          if (!isMounted) return;
+          if (status === "SUBSCRIBED") {
+            // Subscription active
+          } else if (status === "TIMED_OUT" || status === "CHANNEL_ERROR") {
+            console.warn(`[CartSync] Channel ${status}, scheduling reconnect:`, err);
+            if (reconnectTimer) clearTimeout(reconnectTimer);
+            reconnectTimer = setTimeout(() => {
+              if (isMounted && currentUserIdRef.current) {
+                void supabase.auth.getSession().then(({ data }) => {
+                  if (data.session) {
+                    void start(data.session.access_token, data.session.user.id);
+                  }
+                });
+              }
+            }, 3000);
+          }
+        });
     };
 
-    void supabase.auth.getUser().then(({ data }) => start(!!data.user));
+    // Initial session check
+    void supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        void start(data.session.access_token, data.session.user.id);
+      }
+    });
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) =>
-      start(!!session),
+    // Listen to auth changes (sign-in, sign-out, token refresh)
+    const { data: authSub } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        const nextUserId = session?.user?.id ?? null;
+        const previousUserId = currentUserIdRef.current;
+
+        // If user changed or signed out
+        if (nextUserId !== previousUserId) {
+          window.dispatchEvent(new CustomEvent("cart:updated"));
+          router.refresh();
+        }
+
+        if (session?.user && session.access_token) {
+          void start(session.access_token, session.user.id);
+        } else {
+          stop();
+          currentUserIdRef.current = null;
+        }
+      },
     );
 
     return () => {
-      if (debounce) clearTimeout(debounce);
-      sub.subscription.unsubscribe();
+      isMounted = false;
+      if (debounceTimer) clearTimeout(debounceTimer);
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      authSub.subscription.unsubscribe();
       stop();
     };
   }, [router]);

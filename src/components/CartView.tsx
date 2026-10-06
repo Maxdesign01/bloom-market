@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatNaira } from "@/lib/format";
 import type { CartItem } from "@/lib/types";
@@ -27,6 +27,37 @@ export function CartView({
     setItems(initialItems);
     setSubtotal(initialSubtotal);
   }
+
+  // Actively listen to cart updates from Realtime or other tabs/devices
+  useEffect(() => {
+    let ignore = false;
+    const onCartUpdated = async () => {
+      try {
+        const res = await fetch("/api/cart", { cache: "no-store" });
+        if (!res.ok || ignore) return;
+        const json = (await res.json()) as {
+          cart: { cart_items: CartItem[] } | null;
+        };
+        const next = json.cart?.cart_items ?? [];
+        setItems(next);
+        setSubtotal(
+          next.reduce(
+            (sum: number, i: CartItem) =>
+              sum + (i.products?.price ?? 0) * i.quantity,
+            0,
+          ),
+        );
+      } catch {
+        // Non-critical background sync
+      }
+    };
+
+    window.addEventListener("cart:updated", onCartUpdated);
+    return () => {
+      ignore = true;
+      window.removeEventListener("cart:updated", onCartUpdated);
+    };
+  }, []);
 
   async function patch(productId: string, quantity: number) {
     setBusyId(productId);

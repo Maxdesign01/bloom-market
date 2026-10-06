@@ -5,17 +5,25 @@ import { useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * Sign-out for the profile page. Kept client-side because Supabase auth is a
- * browser concern; it reuses the same `createClient()` helper and the same
- * sign-out call the header sheet already performs.
+ * Sign-out for the profile page.
+ * Clears the server session, removes the cart cookie for account isolation,
+ * dispatches the cart update event, and navigates home cleanly.
  */
 export function SignOutButton() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   async function signOut() {
+    try {
+      await fetch("/api/auth/signout", { method: "POST" });
+    } catch {
+      // Best-effort server cookie clear
+    }
+
     const supabase = createClient();
     await supabase.auth.signOut();
+    window.dispatchEvent(new CustomEvent("cart:updated"));
+
     startTransition(() => {
       router.refresh();
       router.push("/");

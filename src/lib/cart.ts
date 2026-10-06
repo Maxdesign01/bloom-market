@@ -171,20 +171,53 @@ async function mergeGuestCart(
   await admin.from("carts").delete().eq("id", guestCartId);
 }
 
+/** Clear the cart cookie (used on sign-out). */
+export async function clearCartCookie(): Promise<void> {
+  try {
+    const store = await cookies();
+    store.set(CART_COOKIE, "", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 0,
+    });
+  } catch {
+    // Server components cannot delete cookies
+  }
+}
+
 /**
  * Resolve the cart id for this request.
  *
  * Signed-in visitors always resolve to their single account cart, which
  * is what lets the basket follow them across devices and between the
- * website and the installed app. Guests keep the original cookie-scoped
- * behaviour.
+ * website and the installed app.
+ *
+ * Enforces strict account isolation:
+ * - A guest only ever receives an unowned cart (user_id IS NULL).
+ * - A signed-in user's cart is NEVER leaked to guests on sign-out.
+ * - An unowned guest cart merges seamlessly into the account cart on login.
  */
 export async function resolveCartId(): Promise<string | null> {
   const userId = await getCurrentUserId();
   const cookieCartId = await getCartCookie();
+  const admin = createAdminClient();
 
   if (!userId) {
-    if (cookieCartId) return cookieCartId;
+    if (cookieCartId) {
+      const { data: cart } = await admin
+        .from("carts")
+        .select("id, user_id")
+        .eq("id", cookieCartId)
+        .maybeSingle();
+
+      // Only reuse if this cart is genuinely an unclaimed guest cart.
+      // If it belongs to an account (e.g. from a past session), discard it!
+      if (cart && cart.user_id === null) {
+        return cart.id;
+      }
+    }
     const created = await createCart(null);
     if (created) await setCartCookie(created);
     return created;
@@ -195,7 +228,15 @@ export async function resolveCartId(): Promise<string | null> {
   if (userCartId) {
     // Anything still in the cookie is pre-login guest stock — fold it in.
     if (cookieCartId && cookieCartId !== userCartId) {
-      await mergeGuestCart(cookieCartId, userCartId);
+      const { data: cookieCart } = await admin
+        .from("carts")
+        .select("id, user_id")
+        .eq("id", cookieCartId)
+        .maybeSingle();
+
+      if (cookieCart && cookieCart.user_id === null) {
+        await mergeGuestCart(cookieCartId, userCartId);
+      }
       await setCartCookie(userCartId);
     }
     return userCartId;
@@ -203,7 +244,6 @@ export async function resolveCartId(): Promise<string | null> {
 
   // First sign-in on this account: adopt the guest cart if we can claim it.
   if (cookieCartId) {
-    const admin = createAdminClient();
     const { data: claimed } = await admin
       .from("carts")
       .update({ user_id: userId })

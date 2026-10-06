@@ -82,6 +82,30 @@ export default function AccountScreen() {
     }
   };
 
+  // Best-effort transactional email notification for mobile authentication
+  const notifyAuthEmail = async (event: 'signup' | 'login', name?: string) => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+
+      const apiUrl =
+        process.env.EXPO_PUBLIC_API_URL || 'https://bloom-market.vercel.app';
+
+      void fetch(`${apiUrl}/api/auth/notify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ event, fullName: name }),
+      }).catch(() => {});
+    } catch {
+      // Non-fatal background email notification
+    }
+  };
+
   // Sign In / Sign Up handler
   const handleAuth = async () => {
     if (!email.trim() || !password.trim()) {
@@ -108,6 +132,7 @@ export default function AccountScreen() {
 
         if (data.session) {
           setUser(data.session.user);
+          void notifyAuthEmail('signup', fullName.trim());
           Alert.alert('Welcome! 🌸', 'Your account has been created and you are now signed in.');
         } else {
           Alert.alert(
@@ -123,6 +148,7 @@ export default function AccountScreen() {
 
         if (error) throw error;
         setUser(data.user);
+        void notifyAuthEmail('login');
       }
     } catch (err: any) {
       setAuthError(err.message || 'Authentication failed. Please try again.');
@@ -173,6 +199,7 @@ export default function AccountScreen() {
               access_token: accessToken,
               refresh_token: refreshToken,
             });
+            void notifyAuthEmail('login');
           }
         }
       }

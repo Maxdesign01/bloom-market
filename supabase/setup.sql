@@ -327,3 +327,17 @@ create policy "cart_items delete own"
         and c.user_id = auth.uid()
     )
   );
+
+-- Replica Identity for Realtime DELETE RLS
+alter table public.cart_items replica identity full;
+alter table public.carts replica identity full;
+
+
+-- ===== 0009_auth_email_tracking.sql =====
+-- ============================================================
+-- Bloom Market — Auth email notification tracking columns (0009)
+-- ============================================================
+alter table public.profiles
+  add column if not exists welcome_email_sent_at timestamptz,
+  add column if not exists last_login_notified_at timestamptz;
+

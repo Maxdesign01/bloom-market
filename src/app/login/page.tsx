@@ -1,22 +1,32 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
-import { Suspense } from "react";
 import { Logo } from "@/components/Logo";
 
 function LoginInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
+  const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [signingIn, setSigningIn] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [signingInGoogle, setSigningInGoogle] = useState(false);
   const [error, setError] = useState<string | null>(
     () => searchParams.get("error"),
   );
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  // Form fields
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const nextPath = searchParams.get("next") ?? "/";
 
@@ -26,11 +36,27 @@ function LoginInner() {
       setUser(data.user);
       setLoading(false);
     });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  // Update mode if query param changes
+  useEffect(() => {
+    if (searchParams.get("mode") === "signup") {
+      setMode("signup");
+    }
+  }, [searchParams]);
 
   async function signInWithGoogle() {
     setError(null);
-    setSigningIn(true);
+    setSuccessMessage(null);
+    setSigningInGoogle(true);
     try {
       const supabase = createClient();
       const origin = window.location.origin;
@@ -41,18 +67,135 @@ function LoginInner() {
         },
       });
       if (oauthError) throw oauthError;
-      // The browser is being redirected to Google — no further code runs.
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign-in failed");
-      setSigningIn(false);
+    } catch (err: any) {
+      setError(err?.message || "Google sign-in failed. Please try again.");
+      setSigningInGoogle(false);
+    }
+  }
+
+  async function handleLoginSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSuccessMessage(null);
+
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !password) {
+      setError("Please enter both your email address and password.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail, password }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Invalid email or password.");
+      }
+
+      // Sync browser client state
+      const supabase = createClient();
+      await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+
+      window.dispatchEvent(new CustomEvent("cart:updated"));
+      startTransition(() => {
+        router.refresh();
+        router.push(nextPath);
+      });
+    } catch (err: any) {
+      setError(err?.message || "Invalid email or password. Please try again.");
+      setSubmitting(false);
+    }
+  }
+
+  async function handleSignupSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSuccessMessage(null);
+
+    const cleanName = fullName.trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanName) {
+      setError("Please enter your full name.");
+      return;
+    }
+    if (!cleanEmail || !cleanEmail.includes("@")) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (!password || password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match. Please re-enter.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: cleanName,
+          email: cleanEmail,
+          password,
+          confirmPassword,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Could not create account.");
+      }
+
+      // If immediate session was created, sync client session
+      if (data.hasSession) {
+        const supabase = createClient();
+        await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password,
+        });
+
+        window.dispatchEvent(new CustomEvent("cart:updated"));
+        startTransition(() => {
+          router.refresh();
+          router.push(nextPath);
+        });
+      } else {
+        setSuccessMessage(
+          "Your account has been created! Please check your email to verify your address, then sign in.",
+        );
+        setMode("login");
+        setSubmitting(false);
+      }
+    } catch (err: any) {
+      setError(err?.message || "Could not create account. Please try again.");
+      setSubmitting(false);
     }
   }
 
   async function signOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    setUser(null);
-    startTransition(() => router.refresh());
+    setError(null);
+    try {
+      await fetch("/api/auth/signout", { method: "POST" });
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      setUser(null);
+      window.dispatchEvent(new CustomEvent("cart:updated"));
+      startTransition(() => {
+        router.refresh();
+        router.push("/");
+      });
+    } catch {
+      setError("Failed to sign out cleanly.");
+    }
   }
 
   if (loading) {
@@ -74,28 +217,34 @@ function LoginInner() {
         className="pointer-events-none absolute -top-24 -right-16 size-[24rem] rounded-full bg-bloom-100/60 blur-3xl"
       />
 
-      <div className="bm-shell relative grid items-center gap-12 py-16 sm:py-20 lg:grid-cols-2 lg:gap-20 lg:py-24">
+      <div className="bm-shell relative grid items-center gap-12 py-12 sm:py-16 lg:grid-cols-2 lg:gap-20 lg:py-20">
         {/* Editorial side */}
         <div className="max-w-lg">
           <Logo href="/" size={30} />
-          <h1 className="mt-9 font-display text-4xl leading-[1.08] font-semibold tracking-[-0.025em] text-balance sm:text-5xl">
+          <h1 className="mt-8 font-display text-4xl leading-[1.08] font-semibold tracking-[-0.025em] text-balance sm:text-5xl">
             One account, every bouquet you send
           </h1>
-          <p className="mt-6 text-base leading-relaxed text-ink-soft">
-            Sign in with Google to follow your orders, reorder something you loved
-            last month, and check out a little faster. Your details are prefilled
-            at checkout.
+          <p className="mt-5 text-base leading-relaxed text-ink-soft">
+            Sign in to keep your shopping bag in sync across your phone and
+            computer, follow flower deliveries, and check out with ease.
           </p>
 
-          <ul className="mt-10 space-y-4">
+          <ul className="mt-8 space-y-3.5">
             {[
-              "Track every order and its payment status",
-              "Your email and name filled in at checkout",
-              "Guest checkout still works, account or not",
+              "Cross-device cart: items added on your phone appear here instantly",
+              "Track every bouquet delivery and payment status",
+              "Your name and delivery details saved for faster orders",
+              "Guest checkout always works, account or not",
             ].map((benefit) => (
               <li key={benefit} className="flex items-start gap-3">
                 <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-leaf-100 text-leaf-700">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <svg
+                    width="11"
+                    height="11"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden
+                  >
                     <path
                       d="m5 13 4.5 4.5L19 7"
                       stroke="currentColor"
@@ -115,61 +264,314 @@ function LoginInner() {
 
         {/* Card */}
         <div className="mx-auto w-full max-w-md">
-          <div className="rounded-lg bg-surface p-8 shadow-lift ring-1 ring-line sm:p-9">
-            <div className="text-center">
-              <Logo href={null} size={24} className="justify-center" />
-              <h2 className="mt-6 font-display text-2xl font-medium">
-                {user ? "You’re signed in" : "Sign in to Bloom Market"}
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-                {user
-                  ? "Signed in as"
-                  : "Use your Google account to check out faster and track orders."}
-              </p>
-              {user && (
-                <p className="mt-2 text-sm font-medium break-all">{user.email}</p>
-              )}
-            </div>
-
-            {error && (
-              <div
-                role="alert"
-                className="mt-6 rounded-sm border border-bloom-200 bg-bloom-50 px-4 py-3.5 text-sm leading-relaxed text-bloom-800"
-              >
-                {error}
-              </div>
-            )}
-
+          <div className="rounded-lg bg-surface p-7 shadow-lift ring-1 ring-line sm:p-9">
             {user ? (
-              <div className="mt-7 space-y-3">
-                <button
-                  onClick={() => router.push("/orders")}
-                  className="bm-btn bm-btn-primary w-full"
-                >
-                  View my orders
-                </button>
-                <button
-                  onClick={signOut}
-                  disabled={isPending}
-                  className="bm-btn bm-btn-outline w-full"
-                >
-                  {isPending ? "Signing out…" : "Sign out"}
-                </button>
+              /* Signed-in View */
+              <div className="text-center">
+                <Logo href={null} size={24} className="justify-center" />
+                <h2 className="mt-6 font-display text-2xl font-medium">
+                  You’re signed in
+                </h2>
+                <p className="mt-2 text-sm text-ink-soft">
+                  Active account session
+                </p>
+                <div className="mt-4 rounded-md bg-sand-50 p-4 ring-1 ring-sand-200">
+                  <p className="text-sm font-semibold text-leaf-900 break-all">
+                    {user.user_metadata?.full_name || "Valued Member"}
+                  </p>
+                  <p className="mt-0.5 text-xs text-ink-soft break-all">
+                    {user.email}
+                  </p>
+                </div>
+
+                <div className="mt-7 space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => router.push("/orders")}
+                    className="bm-btn bm-btn-primary w-full"
+                  >
+                    View my orders
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/shop")}
+                    className="bm-btn bm-btn-outline w-full"
+                  >
+                    Continue shopping
+                  </button>
+                  <button
+                    type="button"
+                    onClick={signOut}
+                    disabled={isPending}
+                    className="bm-btn w-full bg-sand-100 text-ink-soft hover:bg-sand-200"
+                  >
+                    {isPending ? "Signing out…" : "Sign out"}
+                  </button>
+                </div>
               </div>
             ) : (
-              <button
-                onClick={signInWithGoogle}
-                disabled={signingIn}
-                className="bm-btn mt-7 w-full bg-surface text-ink shadow-soft ring-1 ring-sand-300 hover:bg-sand-50"
-              >
-                <GoogleIcon />
-                {signingIn ? "Redirecting to Google…" : "Continue with Google"}
-              </button>
+              /* Authentication Forms View */
+              <div>
+                <div className="text-center">
+                  <Logo href={null} size={24} className="justify-center" />
+                  <h2 className="mt-5 font-display text-2xl font-medium">
+                    {mode === "login" ? "Welcome back" : "Create your account"}
+                  </h2>
+                  <p className="mt-1.5 text-sm text-ink-soft">
+                    {mode === "login"
+                      ? "Sign in to follow orders and access your saved cart."
+                      : "Join Bloom Market for seamless flower deliveries."}
+                  </p>
+                </div>
+
+                {/* Segmented Mode Toggle */}
+                <div className="mt-6 grid grid-cols-2 rounded-full bg-sand-100 p-1 ring-1 ring-sand-200">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("login");
+                      setError(null);
+                    }}
+                    className={`rounded-full py-1.5 text-xs font-semibold transition-all ${
+                      mode === "login"
+                        ? "bg-surface text-leaf-900 shadow-xs"
+                        : "text-ink-soft hover:text-ink"
+                    }`}
+                  >
+                    Log in
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("signup");
+                      setError(null);
+                    }}
+                    className={`rounded-full py-1.5 text-xs font-semibold transition-all ${
+                      mode === "signup"
+                        ? "bg-surface text-leaf-900 shadow-xs"
+                        : "text-ink-soft hover:text-ink"
+                    }`}
+                  >
+                    Create account
+                  </button>
+                </div>
+
+                {error && (
+                  <div
+                    role="alert"
+                    className="mt-5 rounded-md border border-bloom-200 bg-bloom-50 px-4 py-3 text-sm leading-relaxed text-bloom-800"
+                  >
+                    {error}
+                  </div>
+                )}
+
+                {successMessage && (
+                  <div
+                    role="status"
+                    className="mt-5 rounded-md border border-leaf-200 bg-leaf-50 px-4 py-3 text-sm leading-relaxed text-leaf-800"
+                  >
+                    {successMessage}
+                  </div>
+                )}
+
+                {mode === "login" ? (
+                  /* Form: Log in */
+                  <form onSubmit={handleLoginSubmit} className="mt-6 space-y-4">
+                    <div>
+                      <label htmlFor="login-email" className="bm-label">
+                        Email address
+                      </label>
+                      <input
+                        id="login-email"
+                        type="email"
+                        required
+                        autoComplete="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="bm-input"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="login-password" className="bm-label">
+                        Password
+                      </label>
+                      <input
+                        id="login-password"
+                        type="password"
+                        required
+                        autoComplete="current-password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="bm-input"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="bm-btn bm-btn-primary mt-2 w-full"
+                    >
+                      {submitting ? (
+                        <>
+                          <Spinner />
+                          Signing in…
+                        </>
+                      ) : (
+                        "Log in"
+                      )}
+                    </button>
+                  </form>
+                ) : (
+                  /* Form: Create account */
+                  <form onSubmit={handleSignupSubmit} className="mt-6 space-y-3.5">
+                    <div>
+                      <label htmlFor="signup-name" className="bm-label">
+                        Full name
+                      </label>
+                      <input
+                        id="signup-name"
+                        type="text"
+                        required
+                        autoComplete="name"
+                        placeholder="e.g. Amara Okafor"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className="bm-input"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="signup-email" className="bm-label">
+                        Email address
+                      </label>
+                      <input
+                        id="signup-email"
+                        type="email"
+                        required
+                        autoComplete="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="bm-input"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="signup-password" className="bm-label">
+                        Password
+                      </label>
+                      <input
+                        id="signup-password"
+                        type="password"
+                        required
+                        autoComplete="new-password"
+                        placeholder="At least 6 characters"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="bm-input"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="signup-confirm" className="bm-label">
+                        Confirm password
+                      </label>
+                      <input
+                        id="signup-confirm"
+                        type="password"
+                        required
+                        autoComplete="new-password"
+                        placeholder="Re-enter password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="bm-input"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="bm-btn bm-btn-primary mt-2 w-full"
+                    >
+                      {submitting ? (
+                        <>
+                          <Spinner />
+                          Creating account…
+                        </>
+                      ) : (
+                        "Create account"
+                      )}
+                    </button>
+                  </form>
+                )}
+
+                {/* Divider */}
+                <div className="relative my-6 text-center">
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 flex items-center"
+                  >
+                    <div className="w-full border-t border-line" />
+                  </div>
+                  <span className="relative bg-surface px-3 text-xs uppercase tracking-wider text-sand-400">
+                    or
+                  </span>
+                </div>
+
+                {/* Continue with Google */}
+                <button
+                  type="button"
+                  onClick={signInWithGoogle}
+                  disabled={signingInGoogle || submitting}
+                  className="bm-btn w-full bg-surface text-ink shadow-soft ring-1 ring-sand-300 hover:bg-sand-50"
+                >
+                  <GoogleIcon />
+                  {signingInGoogle
+                    ? "Redirecting to Google…"
+                    : "Continue with Google"}
+                </button>
+
+                {/* Switcher Footer */}
+                <div className="mt-6 border-t border-line pt-4 text-center">
+                  {mode === "login" ? (
+                    <p className="text-xs text-ink-soft">
+                      Don’t have an account?{" "}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMode("signup");
+                          setError(null);
+                        }}
+                        className="font-semibold text-leaf-800 underline underline-offset-2 hover:text-leaf-950"
+                      >
+                        Create account
+                      </button>
+                    </p>
+                  ) : (
+                    <p className="text-xs text-ink-soft">
+                      Already have an account?{" "}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMode("login");
+                          setError(null);
+                        }}
+                        className="font-semibold text-leaf-800 underline underline-offset-2 hover:text-leaf-950"
+                      >
+                        Log in
+                      </button>
+                    </p>
+                  )}
+                </div>
+              </div>
             )}
 
-            <p className="mt-6 flex items-center justify-center gap-2 border-t border-line pt-5 text-xs text-ink-soft">
+            <p className="mt-5 flex items-center justify-center gap-2 pt-3 text-xs text-ink-soft">
               <LockIcon />
-              We never see or store your Google password.
+              Your data and credentials are kept secure.
             </p>
           </div>
         </div>
@@ -191,6 +593,34 @@ export default function LoginPage() {
     >
       <LoginInner />
     </Suspense>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      className="animate-spin"
+      aria-hidden
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        opacity="0.25"
+      />
+      <path
+        d="M21 12a9 9 0 0 0-9-9"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 

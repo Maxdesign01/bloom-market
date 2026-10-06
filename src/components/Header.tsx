@@ -87,10 +87,16 @@ export function Header() {
   }, [menuOpen]);
 
   async function signOut() {
+    try {
+      await fetch("/api/auth/signout", { method: "POST" });
+    } catch {
+      // Best-effort server cookie clear
+    }
     const supabase = createClient();
     await supabase.auth.signOut();
     setUser(null);
     setMenuOpenedAt(null);
+    window.dispatchEvent(new CustomEvent("cart:updated"));
     startTransition(() => {
       router.refresh();
       router.push("/");
