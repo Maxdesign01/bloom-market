@@ -39,6 +39,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "bcefb550-e88a-4841-8538-7e11e3967ed9"
+      }
+    },
+    "owner": "maxdesigns"
   }
 }
